@@ -1,0 +1,26 @@
+{
+  "name": "@repo/store",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "exports": {
+    "./useUser": {
+      "types": "./src/hooks/useUser.ts",
+      "default": "./src/hooks/useUser.ts"
+    },
+    "./userAtom": {
+      "types": "./src/atoms/user.ts",
+      "default": "./src/atoms/user.ts"
+    },
+    "./chessBoard": {
+      "types": "./src/atoms/chessBoard.ts",
+      "default": "./src/atoms/chessBoard.ts"
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "recoil": "^0.7.7"
+  }
+}
