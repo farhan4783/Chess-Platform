@@ -38,10 +38,7 @@ class SocketManager {
   }
 
   addUser(user: User, roomId: string) {
-    this.interestedSockets.set(roomId, [
-      ...(this.interestedSockets.get(roomId) || []),
-      user,
-    ]);
+    this.interestedSockets.set(roomId, [...(this.interestedSockets.get(roomId) || []), user]);
     this.userRoomMappping.set(user.userId, roomId);
   }
 
@@ -63,14 +60,9 @@ class SocketManager {
       console.error('User was not interested in any room?');
       return;
     }
-    const room = this.interestedSockets.get(roomId) || []
-    const remainingUsers = room.filter(u =>
-      u.userId !== user.userId
-    )
-    this.interestedSockets.set(
-      roomId,
-      remainingUsers
-    );
+    const room = this.interestedSockets.get(roomId) || [];
+    const remainingUsers = room.filter((u) => u.userId !== user.userId);
+    this.interestedSockets.set(roomId, remainingUsers);
     if (this.interestedSockets.get(roomId)?.length === 0) {
       this.interestedSockets.delete(roomId);
     }
@@ -78,4 +70,4 @@ class SocketManager {
   }
 }
 
-export const socketManager = SocketManager.getInstance()
+export const socketManager = SocketManager.getInstance();

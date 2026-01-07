@@ -18,15 +18,8 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 export function initPassport() {
-  if (
-    !GOOGLE_CLIENT_ID ||
-    !GOOGLE_CLIENT_SECRET ||
-    !GITHUB_CLIENT_ID ||
-    !GITHUB_CLIENT_SECRET
-  ) {
-    throw new Error(
-      'Missing environment variables for authentication providers',
-    );
+  if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
+    throw new Error('Missing environment variables for authentication providers');
   }
 
   passport.use(
@@ -36,12 +29,7 @@ export function initPassport() {
         clientSecret: GOOGLE_CLIENT_SECRET,
         callbackURL: '/auth/google/callback',
       },
-      async function (
-        accessToken: string,
-        refreshToken: string,
-        profile: any,
-        done: (error: any, user?: any) => void,
-      ) {
+      async function (accessToken: string, refreshToken: string, profile: any, done: (error: any, user?: any) => void) {
         const user = await db.user.upsert({
           create: {
             email: profile.emails[0].value,
@@ -57,8 +45,8 @@ export function initPassport() {
         });
 
         done(null, user);
-      },
-    ),
+      }
+    )
   );
 
   passport.use(
@@ -68,12 +56,7 @@ export function initPassport() {
         clientSecret: GITHUB_CLIENT_SECRET,
         callbackURL: '/auth/github/callback',
       },
-      async function (
-        accessToken: string,
-        refreshToken: string,
-        profile: any,
-        done: (error: any, user?: any) => void,
-      ) {
+      async function (accessToken: string, refreshToken: string, profile: any, done: (error: any, user?: any) => void) {
         const res = await fetch('https://api.github.com/user/emails', {
           headers: {
             Authorization: `token ${accessToken}`,
@@ -97,8 +80,8 @@ export function initPassport() {
         });
 
         done(null, user);
-      },
-    ),
+      }
+    )
   );
 
   passport.serializeUser(function (user: any, cb) {
