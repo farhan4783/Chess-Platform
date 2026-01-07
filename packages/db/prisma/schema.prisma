@@ -19,6 +19,9 @@ model User {
   gamesAsBlack  Game[]   @relation("GamesAsBlack")
   createdAt     DateTime @default(now())
   lastLogin     DateTime?
+  wins          Int      @default(0)
+  losses        Int      @default(0)
+  draws         Int      @default(0)
 
   @@index([rating])
 }

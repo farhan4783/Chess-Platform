@@ -6,8 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { COOKIE_MAX_AGE } from '../consts';
 const router = Router();
 
-const CLIENT_URL =
-  process.env.AUTH_REDIRECT_URL ?? 'http://localhost:5173/game/random';
+const CLIENT_URL = process.env.AUTH_REDIRECT_URL ?? 'http://localhost:5173/game/random';
 const JWT_SECRET = process.env.JWT_SECRET || 'fk123456';
 
 interface userJwtClaims {
@@ -21,31 +20,50 @@ interface UserDetails {
   token?: string;
   name: string;
   isGuest?: boolean;
+  rating?: number;
+  wins?: number;
+  losses?: number;
+  draws?: number;
 }
 
 // this route is to be hit when the user wants to login as a guest
 router.post('/guest', async (req: Request, res: Response) => {
   const bodyData = req.body;
-  let guestUUID = 'guest-' + uuidv4();
+  const requestedName = bodyData.name;
 
-  const user = await db.user.create({
-    data: {
-      username: guestUUID,
-      email: guestUUID + '@antichess.com',
-      name: bodyData.name || guestUUID,
-      provider: 'GUEST',
+  if (!requestedName) {
+    return res.status(400).json({ message: 'Name is required' });
+  }
+
+  // Check if user already exists
+  let user = await db.user.findFirst({
+    where: {
+      username: requestedName,
     },
   });
 
-  const token = jwt.sign(
-    { userId: user.id, name: user.name, isGuest: true },
-    JWT_SECRET,
-  );
+  if (!user) {
+    // Create new user if not found
+    user = await db.user.create({
+      data: {
+        username: requestedName,
+        email: requestedName + '@guest.antichess.com', // Dummy email
+        name: requestedName,
+        provider: 'GUEST',
+      },
+    });
+  }
+
+  const token = jwt.sign({ userId: user.id, name: user.name, isGuest: true }, JWT_SECRET);
   const UserDetails: UserDetails = {
     id: user.id,
     name: user.name!,
     token: token,
     isGuest: true,
+    rating: user.rating,
+    wins: user.wins,
+    losses: user.losses,
+    draws: user.draws,
   };
   res.cookie('guest', token, { maxAge: COOKIE_MAX_AGE });
   res.json(UserDetails);
@@ -69,18 +87,25 @@ router.get('/refresh', async (req: Request, res: Response) => {
       token,
       id: user.id,
       name: userDb?.name,
+      rating: userDb?.rating,
+      wins: userDb?.wins,
+      losses: userDb?.losses,
+      draws: userDb?.draws,
     });
   } else if (req.cookies && req.cookies.guest) {
     const decoded = jwt.verify(req.cookies.guest, JWT_SECRET) as userJwtClaims;
-    const token = jwt.sign(
-      { userId: decoded.userId, name: decoded.name, isGuest: true },
-      JWT_SECRET,
-    );
+    const userDb = await db.user.findUnique({ where: { id: decoded.userId } }); // Fetch latest stats
+
+    const token = jwt.sign({ userId: decoded.userId, name: decoded.name, isGuest: true }, JWT_SECRET);
     let User: UserDetails = {
       id: decoded.userId,
       name: decoded.name,
       token: token,
       isGuest: true,
+      rating: userDb?.rating,
+      wins: userDb?.wins,
+      losses: userDb?.losses,
+      draws: userDb?.draws,
     };
     res.cookie('guest', token, { maxAge: COOKIE_MAX_AGE });
     res.json(User);
@@ -106,33 +131,24 @@ router.get('/logout', (req: Request, res: Response) => {
   });
 });
 
-router.get(
-  '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] }),
-);
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get(
   '/google/callback',
   passport.authenticate('google', {
     successRedirect: CLIENT_URL,
     failureRedirect: '/login/failed',
-  }),
+  })
 );
 
-router.get(
-  '/github',
-  passport.authenticate('github', { scope: ['read:user', 'user:email'] }),
-);
+router.get('/github', passport.authenticate('github', { scope: ['read:user', 'user:email'] }));
 
 router.get(
   '/github/callback',
   passport.authenticate('github', {
     successRedirect: CLIENT_URL,
     failureRedirect: '/login/failed',
-  }),
+  })
 );
 
 export default router;
-
-
-

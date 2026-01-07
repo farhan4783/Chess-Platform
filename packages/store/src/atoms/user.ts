@@ -6,6 +6,10 @@ export interface User {
   token: string;
   id: string;
   name: string;
+  rating?: number;
+  wins?: number;
+  losses?: number;
+  draws?: number;
 }
 
 export const userAtom = atom<User>({

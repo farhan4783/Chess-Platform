@@ -1,5 +1,5 @@
 import { useUser } from '@repo/store/useUser';
-import { Metadata, Player } from '../screens/Game';
+import type { Metadata, Player } from '../screens/Game';
 
 interface UserAvatarProps {
   gameMetadata: Metadata | null;
@@ -8,16 +8,17 @@ interface UserAvatarProps {
 
 export const UserAvatar = ({ gameMetadata, self }: UserAvatarProps) => {
   const user = useUser();
-  let player: Player;
-  if (gameMetadata?.blackPlayer.id === user.id) {
-    player = self ? gameMetadata.blackPlayer : gameMetadata.whitePlayer;
-  } else {
-    player = self ? gameMetadata?.whitePlayer! : gameMetadata?.blackPlayer!;
-  }
+  if (!gameMetadata) return null;
+  const whitePlayer = gameMetadata.whitePlayer;
+  const blackPlayer = gameMetadata.blackPlayer;
+  const player: Player =
+    gameMetadata.blackPlayer.id === user.id ? (self ? blackPlayer : whitePlayer) : self ? whitePlayer : blackPlayer;
 
   return (
     <div className="text-white flex gap-2 ">
-      <p>{player?.name}</p>
+      <p>
+        {player?.name} {player?.rating ? `(${player.rating})` : ''}
+      </p>
       {player?.isGuest && <p className="text-gray-500">[Guest]</p>}
     </div>
   );

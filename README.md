@@ -26,10 +26,7 @@ i have taken this project from 100xchess and i have added my new features to it 
 Follow these steps to get the project running locally:
 
 ### 1. Clone the repository
-\`\`\`bash
-git clone https://github.com/farhan4783/Chess-Platform.git
-cd Chess-Platform
-\`\`\`
+
 
 ### 2. Install Dependencies
 \`\`\`bash
@@ -66,3 +63,9 @@ npm run dev
 
 ## 🤝 Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 🔄 Recent Updates (Jan 2026)
+- **Auth System Refactor**: Implemented persistent "Guest Login" (stored via cookies) with simplified Name-only access.
+- **User Stats & Elo**: Added tracking for Rating (Elo), Wins, Losses, and Draws. Stats are now displayed on the user profile.
+- **Frontend Flow**: Improved navigation flow (Login -> Home -> Play), protecting game routes and ensuring deep links (e.g. via Sidebar) work seamlessly.
+- **Bug Fixes**: Resolved Prisma client bundling issues in `apps/ws` and fixed CORS configuration for persistent sessions.
