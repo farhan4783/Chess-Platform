@@ -8,60 +8,364 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  username      String?   @unique
-  name          String?
-  email         String   @unique
-  provider      AuthProvider
-  password      String?
-  rating        Int      @default(1200)
-  gamesAsWhite  Game[]   @relation("GamesAsWhite")
-  gamesAsBlack  Game[]   @relation("GamesAsBlack")
-  createdAt     DateTime @default(now())
-  lastLogin     DateTime?
-  wins          Int      @default(0)
-  losses        Int      @default(0)
-  draws         Int      @default(0)
+  id       String       @id @default(uuid())
+  username String?      @unique
+  name     String?
+  email    String       @unique
+  provider AuthProvider
+  password String?
+
+  // Ratings
+  rating          Int @default(1200)
+  puzzleRating    Int @default(1200)
+  blitzRating     Int @default(1200)
+  rapidRating     Int @default(1200)
+  bulletRating    Int @default(1200)
+  classicalRating Int @default(1200)
+
+  // Profile
+  avatar  String?
+  bio     String?
+  country String?
+  title   String? // GM, IM, FM, etc.
+
+  // Statistics
+  gamesAsWhite Game[] @relation("GamesAsWhite")
+  gamesAsBlack Game[] @relation("GamesAsBlack")
+  wins         Int    @default(0)
+  losses       Int    @default(0)
+  draws        Int    @default(0)
+  totalGames   Int    @default(0)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  lastLogin DateTime?
+
+  // Social
+  friendsInitiated Friendship[] @relation("FriendshipInitiator")
+  friendsReceived  Friendship[] @relation("FriendshipReceiver")
+  sentMessages     Message[]    @relation("MessageSender")
+  receivedMessages Message[]    @relation("MessageReceiver")
+  clubMemberships  ClubMember[]
+
+  // Tournaments
+  tournamentParticipations TournamentParticipant[]
+
+  // Puzzles
+  puzzleAttempts PuzzleAttempt[]
+
+  // Achievements
+  achievements UserAchievement[]
+
+  // Annotations
+  annotations GameAnnotation[]
+
+  // Notifications
+  notifications Notification[]
+
+  // Settings
+  isPublic            Boolean @default(true)
+  allowFriendRequests Boolean @default(true)
+  showOnlineStatus    Boolean @default(true)
 
   @@index([rating])
+  @@index([username])
+  @@index([puzzleRating])
 }
 
 model Game {
-  id            String     @id @default(uuid())
+  id            String      @id @default(uuid())
   whitePlayerId String
   blackPlayerId String
-  whitePlayer   User       @relation("GamesAsWhite", fields: [whitePlayerId], references: [id])
-  blackPlayer   User       @relation("GamesAsBlack", fields: [blackPlayerId], references: [id])
+  whitePlayer   User        @relation("GamesAsWhite", fields: [whitePlayerId], references: [id])
+  blackPlayer   User        @relation("GamesAsBlack", fields: [blackPlayerId], references: [id])
   status        GameStatus
   result        GameResult?
   timeControl   TimeControl
-  startingFen   String     @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1") // default value for the startingFen
+  startingFen   String      @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
   currentFen    String?
-  startAt       DateTime   @default(now())
+  startAt       DateTime    @default(now())
   endAt         DateTime?
   moves         Move[]
   opening       String?
   event         String?
 
+  // Tournament
+  tournamentId String?
+  tournament   Tournament? @relation(fields: [tournamentId], references: [id])
+  roundNumber  Int?
+
+  // Variant
+  variant GameVariant @default(STANDARD)
+
+  // Metadata
+  whiteTimeRemaining Int?
+  blackTimeRemaining Int?
+  increment          Int? @default(0)
+
+  // Analysis
+  annotations GameAnnotation[]
+
+  // Statistics
+  whiteAccuracy  Float?
+  blackAccuracy  Float?
+  brilliantMoves Int?   @default(0)
+  blunders       Int?   @default(0)
+
   @@index([status, result])
+  @@index([tournamentId])
+  @@index([whitePlayerId])
+  @@index([blackPlayerId])
 }
 
 model Move {
-  id          String   @id @default(uuid())
-  gameId      String
-  game        Game     @relation(fields: [gameId], references: [id])
-  moveNumber  Int
-  from        String
-  to          String
-  comments    String?
-  before      String
-  after       String
-  timeTaken   Int?     @default(0)
-  createdAt   DateTime @default(now())
-  san         String?   
+  id         String   @id @default(uuid())
+  gameId     String
+  game       Game     @relation(fields: [gameId], references: [id])
+  moveNumber Int
+  from       String
+  to         String
+  comments   String?
+  before     String
+  after      String
+  timeTaken  Int?     @default(0)
+  createdAt  DateTime @default(now())
+  san        String?
 
   @@index([gameId])
 }
+
+// ==================== TOURNAMENT SYSTEM ====================
+
+model Tournament {
+  id           String           @id @default(uuid())
+  name         String
+  description  String?
+  format       TournamentFormat
+  timeControl  TimeControl
+  status       TournamentStatus @default(UPCOMING)
+  maxPlayers   Int
+  currentRound Int              @default(0)
+  totalRounds  Int
+  startDate    DateTime
+  endDate      DateTime?
+  createdAt    DateTime         @default(now())
+  createdBy    String
+
+  participants TournamentParticipant[]
+  games        Game[]
+  rounds       TournamentRound[]
+
+  @@index([status])
+  @@index([startDate])
+}
+
+model TournamentParticipant {
+  id           String     @id @default(uuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  score        Float      @default(0)
+  rank         Int?
+  isActive     Boolean    @default(true)
+  joinedAt     DateTime   @default(now())
+
+  @@unique([tournamentId, userId])
+  @@index([tournamentId])
+  @@index([userId])
+}
+
+model TournamentRound {
+  id           String     @id @default(uuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  roundNumber  Int
+  startTime    DateTime?
+  endTime      DateTime?
+
+  @@unique([tournamentId, roundNumber])
+  @@index([tournamentId])
+}
+
+// ==================== PUZZLE SYSTEM ====================
+
+model Puzzle {
+  id         String   @id @default(uuid())
+  fen        String
+  moves      String // Solution moves in UCI format
+  rating     Int      @default(1500)
+  themes     String[] // Array of theme tags
+  popularity Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  attempts PuzzleAttempt[]
+
+  @@index([rating])
+  @@index([themes])
+}
+
+model PuzzleAttempt {
+  id        String   @id @default(uuid())
+  puzzleId  String
+  puzzle    Puzzle   @relation(fields: [puzzleId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  solved    Boolean
+  timeSpent Int // in seconds
+  attempts  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@index([puzzleId])
+  @@index([userId])
+  @@index([solved])
+}
+
+// ==================== SOCIAL FEATURES ====================
+
+model Friendship {
+  id          String           @id @default(uuid())
+  initiatorId String
+  initiator   User             @relation("FriendshipInitiator", fields: [initiatorId], references: [id])
+  receiverId  String
+  receiver    User             @relation("FriendshipReceiver", fields: [receiverId], references: [id])
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  acceptedAt  DateTime?
+
+  @@unique([initiatorId, receiverId])
+  @@index([initiatorId])
+  @@index([receiverId])
+  @@index([status])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("MessageSender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([isRead])
+}
+
+model Club {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  avatar      String?
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  members   ClubMember[]
+  chatRooms ChatRoom[]
+
+  @@index([name])
+}
+
+model ClubMember {
+  id       String   @id @default(uuid())
+  clubId   String
+  club     Club     @relation(fields: [clubId], references: [id])
+  userId   String
+  user     User     @relation(fields: [userId], references: [id])
+  role     ClubRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+
+  @@unique([clubId, userId])
+  @@index([clubId])
+  @@index([userId])
+}
+
+model ChatRoom {
+  id        String   @id @default(uuid())
+  name      String
+  clubId    String?
+  club      Club?    @relation(fields: [clubId], references: [id])
+  createdAt DateTime @default(now())
+
+  messages ChatMessage[]
+
+  @@index([clubId])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  roomId    String
+  room      ChatRoom @relation(fields: [roomId], references: [id])
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([roomId])
+  @@index([userId])
+}
+
+// ==================== ACHIEVEMENTS ====================
+
+model Achievement {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String
+  icon        String?
+  category    String
+  requirement String // JSON string describing requirements
+  points      Int     @default(0)
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+  progress      Int         @default(100)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+}
+
+// ==================== ANNOTATIONS & MISC ====================
+
+model GameAnnotation {
+  id         String   @id @default(uuid())
+  gameId     String
+  game       Game     @relation(fields: [gameId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  moveNumber Int
+  annotation String
+  createdAt  DateTime @default(now())
+
+  @@index([gameId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+// ==================== ENUMS ====================
 
 enum GameStatus {
   IN_PROGRESS
@@ -89,4 +393,51 @@ enum AuthProvider {
   GOOGLE
   GITHUB
   GUEST
+}
+
+enum GameVariant {
+  STANDARD
+  CHESS960
+  THREE_CHECK
+  KING_OF_THE_HILL
+  CRAZYHOUSE
+}
+
+enum TournamentFormat {
+  SWISS
+  ROUND_ROBIN
+  KNOCKOUT
+  ARENA
+}
+
+enum TournamentStatus {
+  UPCOMING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  BLOCKED
+}
+
+enum ClubRole {
+  OWNER
+  ADMIN
+  MODERATOR
+  MEMBER
+}
+
+enum NotificationType {
+  FRIEND_REQUEST
+  FRIEND_ACCEPTED
+  GAME_INVITATION
+  TOURNAMENT_STARTED
+  TOURNAMENT_ROUND
+  ACHIEVEMENT_UNLOCKED
+  MESSAGE_RECEIVED
+  CLUB_INVITATION
 }
