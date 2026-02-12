@@ -1,25 +1,30 @@
 # Database Schema Documentation
 
 ## Overview
+
 This package contains the Prisma schema and database client for the advanced chess platform.
 
 ## Models
 
 ### Core Models
+
 - **User**: Extended user model with multiple rating categories, profile customization, and social features
 - **Game**: Chess games with tournament support, variants, and analysis metadata
 - **Move**: Individual moves in games with timing and notation
 
 ### Tournament System
+
 - **Tournament**: Tournament management (Swiss, Round-Robin, Knockout, Arena formats)
 - **TournamentParticipant**: Player registration and standings
 - **TournamentRound**: Round management for tournaments
 
 ### Puzzle System
+
 - **Puzzle**: Chess puzzles with difficulty ratings and themes
 - **PuzzleAttempt**: User puzzle solving history and statistics
 
 ### Social Features
+
 - **Friendship**: Friend connections between users
 - **Message**: Direct messaging system
 - **Club**: Chess clubs/groups
@@ -28,10 +33,12 @@ This package contains the Prisma schema and database client for the advanced che
 - **ChatMessage**: Messages in chat rooms
 
 ### Achievements
+
 - **Achievement**: Achievement definitions
 - **UserAchievement**: Unlocked achievements per user
 
 ### Misc
+
 - **GameAnnotation**: User annotations on games
 - **Notification**: System notifications
 
@@ -90,6 +97,7 @@ const user = await prisma.user.findUnique({
 ## Enums
 
 ### GameVariant
+
 - STANDARD
 - CHESS960
 - THREE_CHECK
@@ -97,24 +105,28 @@ const user = await prisma.user.findUnique({
 - CRAZYHOUSE
 
 ### TournamentFormat
+
 - SWISS
 - ROUND_ROBIN
 - KNOCKOUT
 - ARENA
 
 ### TournamentStatus
+
 - UPCOMING
 - IN_PROGRESS
 - COMPLETED
 - CANCELLED
 
 ### FriendshipStatus
+
 - PENDING
 - ACCEPTED
 - DECLINED
 - BLOCKED
 
 ### NotificationType
+
 - FRIEND_REQUEST
 - FRIEND_ACCEPTED
 - GAME_INVITATION
