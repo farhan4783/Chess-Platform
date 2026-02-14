@@ -63,6 +63,15 @@ model User {
   // Notifications
   notifications Notification[]
 
+  // Phase 1: Advanced Features
+  emotionalAnalytics EmotionalAnalytics[]
+  cognitiveSessions  CognitiveSession[]
+  playingStyleDNA    PlayingStyleDNA?
+  adaptivePuzzleSets AdaptivePuzzleSet[]
+  careerProgress     CareerProgress?
+  aiCoachInsights    AICoachInsight[]
+  blunderClusters    BlunderCluster[]
+
   // Settings
   isPublic            Boolean @default(true)
   allowFriendRequests Boolean @default(true)
@@ -440,4 +449,267 @@ enum NotificationType {
   ACHIEVEMENT_UNLOCKED
   MESSAGE_RECEIVED
   CLUB_INVITATION
+}
+
+// ============================================
+// PHASE 1: ADVANCED FEATURES
+// ============================================
+
+// Emotional & Cognitive Analytics
+model EmotionalAnalytics {
+  id        String   @id @default(uuid())
+  userId    String
+  gameId    String
+  createdAt DateTime @default(now())
+
+  // Tilt Detection
+  tiltScore        Float   @default(0) // 0-100
+  tiltTriggerMove  Int? // Move number where tilt started
+  blundersInTilt   Int     @default(0)
+  
+  // Time Pressure Analysis
+  avgMoveTimeMs    Int
+  panicModeStart   Int? // Move number
+  movesUnder10Sec  Int     @default(0)
+  blundersUnder30s Int     @default(0)
+  
+  // Confidence Metrics
+  confidenceScore  Float   @default(50) // 0-100
+  overconfidentAt  Int? // Move number
+  hesitationMoves  Int     @default(0)
+  
+  // Performance Correlation
+  accuracyDrop     Float? // Percentage drop from baseline
+  ratingChange     Int?
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([createdAt])
+}
+
+// Cognitive Performance Tracking
+model CognitiveSession {
+  id        String   @id @default(uuid())
+  userId    String
+  startTime DateTime @default(now())
+  endTime   DateTime?
+
+  // Focus & Stamina
+  focusScore       Float   @default(100) // Degrades over time
+  fatigueLevel     Float   @default(0) // 0-100
+  optimalDuration  Int? // Minutes before fatigue
+  
+  // Decision Quality
+  sharpnessScore   Float? // Based on move quality
+  blunderRate      Float? // Blunders per game
+  tacticalMisses   Int     @default(0)
+  
+  // Session Stats
+  gamesPlayed      Int     @default(0)
+  avgAccuracy      Float?
+  peakPerformance  Int? // Game number with best performance
+
+  @@index([userId])
+  @@index([startTime])
+}
+
+// Playing Style DNA
+model PlayingStyleDNA {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  updatedAt DateTime @updatedAt
+
+  // Aggression Metrics
+  aggressionScore    Float   @default(50) // 0-100
+  sacrificeRate      Float   @default(0)
+  attackFrequency    Float   @default(0)
+  
+  // Risk Appetite
+  riskScore          Float   @default(50) // 0-100
+  gambitsPlayed      Int     @default(0)
+  sharpPositions     Float   @default(0)
+  
+  // Tactical Preference
+  tacticalComplexity Float   @default(50) // 0-100
+  combinationRate    Float   @default(0)
+  quietMoveRate      Float   @default(0)
+  
+  // Positional Play
+  positionalScore    Float   @default(50) // 0-100
+  pawnStructure      Float   @default(0)
+  pieceActivity      Float   @default(0)
+  
+  // Time Management
+  timeUsagePattern   String? // "blitz_lover", "slow_thinker", etc.
+  avgMoveTime        Int?
+  timeScrambles      Int     @default(0)
+  
+  // Opening Repertoire
+  e4Frequency        Float   @default(0)
+  d4Frequency        Float   @default(0)
+  sicilianDefense    Float   @default(0)
+  favoriteOpening    String?
+  
+  // Archetype
+  styleArchetype     String? // "Tactician", "Positional", "Universal", etc.
+  similarGrandmaster String? // "Plays like Tal", etc.
+
+  @@index([userId])
+}
+
+// Weakness-Based Adaptive Puzzles
+model AdaptivePuzzleSet {
+  id          String   @id @default(uuid())
+  userId      String
+  createdAt   DateTime @default(now())
+  
+  // Weakness Analysis
+  weaknessType    String // "endgame", "tactics", "opening", etc.
+  targetRating    Int
+  difficultyLevel Int // 1-10
+  
+  // ML-Generated
+  generatedBy     String   @default("ml_model")
+  clusteringData  Json? // Blunder patterns
+  
+  // Puzzles
+  puzzleIds       String[] // Array of puzzle IDs
+  completedCount  Int      @default(0)
+  successRate     Float?
+  
+  // Adaptive Scaling
+  currentDifficulty Int    @default(5)
+  adjustmentFactor  Float  @default(1.0)
+
+  @@index([userId])
+  @@index([weaknessType])
+}
+
+// Career Mode
+model CareerProgress {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Progression
+  currentLevel      Int      @default(1) // 1-20 (800-2400 rating)
+  targetRating      Int      @default(1000)
+  currentRating     Int      @default(800)
+  
+  // Story Progress
+  chaptersCompleted Int      @default(0)
+  currentChapter    String   @default("beginner")
+  storylineChoices  Json? // Player decisions
+  
+  // AI Opponents Defeated
+  defeatedOpponents String[] // AI personality IDs
+  currentOpponent   String?
+  
+  // Tournaments
+  tournamentsWon    Int      @default(0)
+  sponsorships      String[] // Unlocked sponsors
+  
+  // Unlocks
+  unlockedLessons   String[]
+  unlockedThemes    String[]
+  unlockedAvatars   String[]
+  
+  // Achievements
+  careerAchievements String[]
+  
+  // Stats
+  totalGamesPlayed  Int      @default(0)
+  winRate           Float?
+  fastestPromotion  Int? // Days to next level
+
+  @@index([userId])
+  @@index([currentLevel])
+}
+
+// AI Coach Insights
+model AICoachInsight {
+  id        String   @id @default(uuid())
+  userId    String
+  gameId    String
+  moveNumber Int
+  createdAt DateTime @default(now())
+
+  // Insight Type
+  insightType   String // "time_management", "blunder_warning", "pattern", etc.
+  severity      String // "info", "warning", "critical"
+  
+  // Message
+  message       String
+  suggestion    String?
+  
+  // Context
+  position      String // FEN
+  evaluation    Float? // Centipawn evaluation
+  bestMove      String?
+  playerMove    String?
+  
+  // Real-time Flag
+  isRealtime    Boolean @default(false)
+  wasDisplayed  Boolean @default(false)
+
+  @@index([userId])
+  @@index([gameId])
+  @@index([createdAt])
+}
+
+// Opening Research (Community-Driven)
+model OpeningResearch {
+  id        String   @id @default(uuid())
+  opening   String // e.g., "Sicilian Defense, Najdorf"
+  fen       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Community Data
+  gamesPlayed      Int      @default(0)
+  whiteWins        Int      @default(0)
+  blackWins        Int      @default(0)
+  draws            Int      @default(0)
+  
+  // Analysis
+  popularMoves     Json // Move frequencies
+  winningMoves     Json // Moves with best win rate
+  aiEvaluation     Float?
+  
+  // AI Summary
+  aiSummary        String?
+  keyIdeas         String[]
+  commonMistakes   String[]
+  
+  // Contributions
+  contributorCount Int      @default(0)
+  lastAnalyzedAt   DateTime?
+
+  @@index([opening])
+  @@index([fen])
+  @@index([gamesPlayed])
+}
+
+// Blunder Clustering (ML)
+model BlunderCluster {
+  id        String   @id @default(uuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Cluster Info
+  clusterType      String // "hanging_pieces", "back_rank", "fork", etc.
+  frequency        Int    @default(1)
+  avgRatingLoss    Float
+  
+  // Pattern Data
+  positionPatterns Json // Common FEN patterns
+  movePatterns     Json // Common move sequences
+  
+  // ML Metadata
+  embeddingVector  Json? // For similarity search
+  confidence       Float @default(0)
+
+  @@index([userId])
+  @@index([clusterType])
 }

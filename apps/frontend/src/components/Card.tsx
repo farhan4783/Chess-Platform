@@ -7,6 +7,7 @@ import friendIcon from '../../public/friendship.png';
 import tournamentIcon from '../../public/trophy.png';
 import variantsIcon from '../../public/strategy.png';
 import GameModeComponent from './GameModeComponent';
+import { GradientText } from './GradientText';
 
 export function PlayCard() {
   const gameModeData = [
@@ -53,19 +54,22 @@ export function PlayCard() {
 
   const navigate = useNavigate();
   return (
-    <Card className="bg-transparent border-none">
+    <Card className="glass-strong border-2 border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300">
       <CardHeader className="pb-3 text-center">
         <CardTitle className="font-semibold tracking-wide flex flex-col items-center justify-center">
-          <p className="text-white">
-            Play <span className="text-green-600 font-bold pt-1">Chess</span>
+          <p className="text-white text-3xl">
+            Play{' '}
+            <GradientText variant="primary" className="inline-block ml-2">
+              Chess
+            </GradientText>
           </p>
-          <img className="pl-1 w-1/2 mt-4" src={chessIcon} alt="chess" />
+          <img className="pl-1 w-1/2 mt-4 animate-float" src={chessIcon} alt="chess" />
         </CardTitle>
         <CardDescription />
       </CardHeader>
       <CardContent className="grid gap-2 cursor-pointer mt-1">
-        {gameModeData.map((data) => {
-          return <GameModeComponent {...data} />;
+        {gameModeData.map((data, index) => {
+          return <GameModeComponent key={index} {...data} />;
         })}
       </CardContent>
     </Card>
