@@ -2,6 +2,9 @@
 
 ![Chess Platform Screenshot](screenshot.png)
 
+
+![alt text](image-2.png)
+
 A **comprehensive, feature-rich chess platform** built for learning, competition, and social interaction. Experience smooth gameplay, powerful analysis tools, interactive lessons, tournaments, puzzles, and a thriving chess community.
 
 > **Note**: This project is based on 100xchess with extensive enhancements including tournaments, puzzles, social features, advanced analytics, and premium UI/UX.
@@ -268,6 +271,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - **User Stats & Elo**: Rating tracking with wins/losses/draws
 - **Frontend Flow**: Improved navigation and deep linking
 - **Bug Fixes**: Prisma bundling and CORS configuration
+
+## 👨‍💻 Developer
+
+Created by [Farhan](https://github.com/farhan4783)
 
 ## 📄 License
 

@@ -459,6 +459,7 @@ enum NotificationType {
 model EmotionalAnalytics {
   id        String   @id @default(uuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id])
   gameId    String
   createdAt DateTime @default(now())
 
@@ -491,6 +492,7 @@ model EmotionalAnalytics {
 model CognitiveSession {
   id        String   @id @default(uuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id])
   startTime DateTime @default(now())
   endTime   DateTime?
 
@@ -517,6 +519,7 @@ model CognitiveSession {
 model PlayingStyleDNA {
   id        String   @id @default(uuid())
   userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
   updatedAt DateTime @updatedAt
 
   // Aggression Metrics
@@ -561,6 +564,7 @@ model PlayingStyleDNA {
 model AdaptivePuzzleSet {
   id          String   @id @default(uuid())
   userId      String
+  user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
   
   // Weakness Analysis
@@ -589,6 +593,7 @@ model AdaptivePuzzleSet {
 model CareerProgress {
   id        String   @id @default(uuid())
   userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -631,6 +636,7 @@ model CareerProgress {
 model AICoachInsight {
   id        String   @id @default(uuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id])
   gameId    String
   moveNumber Int
   createdAt DateTime @default(now())
@@ -695,6 +701,7 @@ model OpeningResearch {
 model BlunderCluster {
   id        String   @id @default(uuid())
   userId    String
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
   // Cluster Info

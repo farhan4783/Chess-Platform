@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "esbuild ./src/index.ts --bundle --platform=node --outfile=dist/index.js --external:@repo/db --external:@prisma/client",
     "dev": "esbuild ./src/index.ts --bundle --platform=node --outfile=dist/index.js --sourcemap --external:@repo/db --external:@prisma/client && node dist/index.js",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint --fix ."

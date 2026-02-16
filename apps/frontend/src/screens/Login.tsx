@@ -12,18 +12,27 @@ const Login = () => {
   const [, setUser] = useRecoilState(userAtom);
 
   const loginAsGuest = async () => {
-    const response = await fetch(`${BACKEND_URL}/auth/guest`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        name: (guestName.current && guestName.current.value) || '',
-      }),
-    });
-    const user = await response.json();
+    const username = (guestName.current && guestName.current.value) || 'Guest';
+
+    // Generate a simple user ID
+    const userId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Create user object
+    const user = {
+      token: `guest_token_${userId}`, // Guest users get a placeholder token
+      id: userId,
+      name: username,
+      isGuest: true,
+    };
+
+    // Store in localStorage
+    localStorage.setItem('chess_user', JSON.stringify(user));
+    localStorage.setItem('chess_username', username);
+
+    // Update Recoil state
     setUser(user);
+
+    // Navigate to game
     const from = location.state?.from?.pathname || '/';
     navigate(from);
   };

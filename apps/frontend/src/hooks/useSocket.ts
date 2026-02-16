@@ -9,7 +9,10 @@ export const useSocket = () => {
 
   useEffect(() => {
     if (!user) return;
-    const ws = new WebSocket(`${WS_URL}?token=${user.token}`);
+
+    // Use username directly instead of token
+    const username = user.name || 'Guest';
+    const ws = new WebSocket(`${WS_URL}?token=${encodeURIComponent(username)}`);
 
     ws.onopen = () => {
       setSocket(ws);

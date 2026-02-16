@@ -11,7 +11,7 @@ export const Footer = () => {
         </div>
         <div>
           <div className="flex gap-3 mt-4">
-            <a href="https://github.com/hkirat" target="_blank">
+            <a href="https://github.com/farhan4783" target="_blank">
               <GitHubLogoIcon />
             </a>
             <a href="https://www.youtube.com/@harkirat1" target="_blank">
