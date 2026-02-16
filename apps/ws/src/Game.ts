@@ -107,6 +107,9 @@ export class Game {
   async updateSecondPlayer(player2UserId: string) {
     this.player2UserId = player2UserId;
 
+    // Ensure both users exist in database before creating game
+    await this.ensureUsersExist();
+
     const users = await db.user.findMany({
       where: {
         id: {
@@ -148,6 +151,25 @@ export class Game {
         },
       })
     );
+  }
+
+  private async ensureUsersExist() {
+    const userIds = [this.player1UserId, this.player2UserId].filter(Boolean) as string[];
+
+    for (const userId of userIds) {
+      const exists = await db.user.findUnique({ where: { id: userId } });
+      if (!exists) {
+        await db.user.create({
+          data: {
+            id: userId,
+            name: userId.startsWith('guest_') ? 'Guest Player' : 'Player',
+            email: `${userId}@guest.local`,
+            provider: userId.startsWith('guest_') ? AuthProvider.GUEST : AuthProvider.EMAIL,
+            username: userId.startsWith('guest_') ? `Guest_${userId.slice(-6)}` : userId,
+          },
+        });
+      }
+    }
   }
 
   async createGameInDb() {
