@@ -9,6 +9,8 @@ import { GameAI } from './screens/GameAI';
 import { Analysis } from './screens/Analysis';
 import { Learn } from './screens/Learn';
 import { LessonView } from './screens/LessonView';
+import { Puzzles } from './screens/Puzzles';
+import { Profile } from './screens/Profile';
 import { Suspense } from 'react';
 import { RecoilRoot } from 'recoil';
 import { Loader } from './components/Loader';
@@ -106,6 +108,26 @@ function AuthApp() {
             <RequireAuth>
               <Layout>
                 <LessonView />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/puzzles"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Puzzles />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth>
+              <Layout>
+                <Profile />
               </Layout>
             </RequireAuth>
           }
