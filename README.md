@@ -2,7 +2,6 @@
 
 ![Chess Platform Screenshot](screenshot.png)
 
-
 ![alt text](image-2.png)
 
 A **comprehensive, feature-rich chess platform** built for learning, competition, and social interaction. Experience smooth gameplay, powerful analysis tools, interactive lessons, tournaments, puzzles, and a thriving chess community.

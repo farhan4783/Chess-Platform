@@ -1,0 +1,97 @@
+# Chess Platform Upgrade — Walkthrough
+
+## What Was Done
+
+### UI Overhaul (6 files upgraded)
+
+| File | Change |
+|---|---|
+| [index.css](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/index.css) | New keyframe animations (chessFloat, glowPulse, tiltShake), USP utility classes (tilt bar, coach panel, ELO), nav-active glow |
+| [AnimatedBackground.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/components/AnimatedBackground.tsx) | Chess piece Unicode symbols (♟♞♝♜♛♚) floating + rotating subtly in background |
+| [sidebar.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/components/sidebar.tsx) | Premium chess knight logo, gradient brand name, user badge at bottom |
+| [side-nav.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/components/side-nav.tsx) | Active state glow via `nav-active` CSS, hover tooltips when collapsed, badge support, icon scale on hover |
+| [Landing.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/screens/Landing.tsx) | Animated stat counters, "5 Features No Other Platform Has" USP section, platform features grid, cinematic CTA section |
+| [Game.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/screens/Game.tsx) | Premium [PlayerCard](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/screens/Game.tsx#64-126) component with animated color-coded timers, turn indicator banner, pre-game ELO Predictor |
+| [Learn.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/screens/Learn.tsx) | Progress bar, lesson states (complete/locked/active), difficulty badges, sticky Opening Explorer sidebar |
+
+---
+
+### 5 Exclusive USP Features (New Components)
+
+#### 🧠 TiltMeter ([TiltMeter.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/components/TiltMeter.tsx))
+- Reads Recoil moves store to detect blunder patterns
+- Shows animated stress bar: **Calm → Shaky → Stressed → Tilting → ON TILT 🔥**
+- Displays actionable tips when tilt level is high
+- Integrated into Game screen sidebar
+
+#### 🎤 AI Coach Panel ([AICoachPanel.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/components/AICoachPanel.tsx))
+- Generates contextual tips after every single move
+- Covers: openings (moves 1–10), castling, checks, captures, promotions, endgame
+- Fully deterministic — no API key required
+- Integrated into Game screen sidebar
+
+#### ⚡ ELO Predictor ([EloPredictor.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/components/EloPredictor.tsx))
+- Uses standard Elo formula (K=20) to calculate win/draw/loss ELO delta
+- Shows underdog/favorite status with motivational tip
+- Displayed in Game pre-game lobby
+
+#### 🧩 Puzzles Screen ([Puzzles.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/screens/Puzzles.tsx))
+- Date-seeded daily puzzle (rotates from 7-puzzle pool)
+- Mini chessboard rendered with pure Unicode chess pieces
+- Move input with UCI format, smart hints after 2 wrong attempts
+- Streak tracker + puzzle rating display
+
+#### 🧬 Profile Screen ([Profile.tsx](file:///c:/Users/FARAZ%20KHAN/Desktop/DEKSTOP/others/minor%20project/chess-main/apps/frontend/src/screens/Profile.tsx))
+- Opening DNA donut chart (pure SVG)
+- Style radar chart (5 metrics: Aggression, Accuracy, Tactics, Endgame, Openings)
+- Rating history bar chart
+- Achievement grid (earned/locked states)
+- ELO predictor comparison table
+
+---
+
+### New Routes Added
+
+| Route | Screen |
+|---|---|
+| `/puzzles` | Puzzles daily challenge |
+| `/profile` | Opening DNA + stats |
+
+---
+
+## Verification Results
+
+✅ **Vite dev server** started on `http://localhost:5173` with **0 compilation errors**
+
+✅ **Landing page** — New hero, animated counters, USP features section, CTA section
+
+✅ **Sidebar** — Chess knight logo, user badge, active glow nav items, Puzzles badge shown as "New"
+
+✅ **Puzzles page** — Date-seeded puzzle, mini board renders, move input functional
+
+✅ **Profile page** — Radar chart, donut chart, achievements, rating history bar chart
+
+✅ **Learn page** — Progress bar, lesson states (complete/locked), difficulty badges
+
+✅ **Game page** — Premium player cards, turn indicator banner, ELO predictor in lobby
+
+⚠️ **Backend** not running (requires PostgreSQL) — expected, frontend-only features work fully
+
+---
+
+## Screenshots
+
+````carousel
+![Landing Page](C:\Users\FARAZ KHAN\.gemini\antigravity\brain\f0e56f38-ff96-45ee-9c81-8bec68b052bc\landing_page.png)
+<!-- slide -->
+![Puzzles Page](C:\Users\FARAZ KHAN\.gemini\antigravity\brain\f0e56f38-ff96-45ee-9c81-8bec68b052bc\puzzles_page.png)
+<!-- slide -->
+![Profile Page](C:\Users\FARAZ KHAN\.gemini\antigravity\brain\f0e56f38-ff96-45ee-9c81-8bec68b052bc\profile_page.png)
+<!-- slide -->
+![Learn Page](C:\Users\FARAZ KHAN\.gemini\antigravity\brain\f0e56f38-ff96-45ee-9c81-8bec68b052bc\learn_page.png)
+<!-- slide -->
+![Game Page](C:\Users\FARAZ KHAN\.gemini\antigravity\brain\f0e56f38-ff96-45ee-9c81-8bec68b052bc\game_page.png)
+````
+
+## Recording
+![UI Verification Recording](C:\Users\FARAZ KHAN\.gemini\antigravity\brain\f0e56f38-ff96-45ee-9c81-8bec68b052bc\chess_platform_pages_showcase_1772469558153.webp)
