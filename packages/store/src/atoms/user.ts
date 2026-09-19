@@ -6,6 +6,7 @@ export interface User {
   token: string;
   id: string;
   name: string;
+  isGuest?: boolean;
   rating?: number;
   wins?: number;
   losses?: number;

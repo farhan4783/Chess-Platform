@@ -10,7 +10,6 @@ import { Chess, Move } from 'chess.js';
 import { useNavigate, useParams } from 'react-router-dom';
 import MovesTable from '../components/MovesTable';
 import { useUser } from '@repo/store/useUser';
-import { UserAvatar } from '../components/UserAvatar';
 import { TiltMeter } from '../components/TiltMeter';
 import { AICoachPanel } from '../components/AICoachPanel';
 import { EloPredictor } from '../components/EloPredictor';
