@@ -14,7 +14,7 @@ import {
   EXIT_GAME,
 } from './messages';
 import { Game, isPromoting } from './Game';
-import { db } from './db';
+import { db, isDbConnected } from './db';
 import { socketManager, User } from './SocketManager';
 import { Square } from 'chess.js';
 import { GameStatus } from '@prisma/client';
@@ -43,6 +43,14 @@ export class GameManager {
     }
     this.users = this.users.filter((user) => user.socket !== socket);
     socketManager.removeUser(user);
+
+    if (this.pendingGameId) {
+      const pendingGame = this.games.find((g) => g.gameId === this.pendingGameId);
+      if (pendingGame && pendingGame.player1UserId === user.userId) {
+        this.pendingGameId = null;
+        this.removeGame(pendingGame.gameId);
+      }
+    }
   }
 
   removeGame(gameId: string) {
@@ -55,11 +63,10 @@ export class GameManager {
       if (message.type === INIT_GAME) {
         if (this.pendingGameId) {
           const game = this.games.find((x) => x.gameId === this.pendingGameId);
-          if (!game) {
-            console.error('Pending game not found?');
-            return;
-          }
-          if (user.userId === game.player1UserId) {
+          if (!game || (game.player1User && game.player1User.socket.readyState !== WebSocket.OPEN)) {
+            // Stale or disconnected pending game
+            this.pendingGameId = null;
+          } else if (user.userId === game.player1UserId) {
             socketManager.broadcast(
               game.gameId,
               JSON.stringify({
@@ -70,23 +77,25 @@ export class GameManager {
               })
             );
             return;
+          } else {
+            socketManager.addUser(user, game.gameId);
+            await game.updateSecondPlayer(user.userId, user);
+            this.pendingGameId = null;
+            return;
           }
-          socketManager.addUser(user, game.gameId);
-          await game?.updateSecondPlayer(user.userId);
-          this.pendingGameId = null;
-        } else {
-          const game = new Game(user.userId, null);
-          this.games.push(game);
-          this.pendingGameId = game.gameId;
-          socketManager.addUser(user, game.gameId);
-          socketManager.broadcast(
-            game.gameId,
-            JSON.stringify({
-              type: GAME_ADDED,
-              gameId: game.gameId,
-            })
-          );
         }
+
+        const game = new Game(user.userId, null, undefined, undefined, user);
+        this.games.push(game);
+        this.pendingGameId = game.gameId;
+        socketManager.addUser(user, game.gameId);
+        socketManager.broadcast(
+          game.gameId,
+          JSON.stringify({
+            type: GAME_ADDED,
+            gameId: game.gameId,
+          })
+        );
       }
 
       if (message.type === MOVE) {
@@ -117,28 +126,35 @@ export class GameManager {
         }
 
         let availableGame = this.games.find((game) => game.gameId === gameId);
-        const gameFromDb = await db.game.findUnique({
-          where: { id: gameId },
-          include: {
-            moves: {
-              orderBy: {
-                moveNumber: 'asc',
-              },
-            },
-            blackPlayer: true,
-            whitePlayer: true,
-          },
-        });
 
         // There is a game created but no second player available
-
         if (availableGame && !availableGame.player2UserId) {
           socketManager.addUser(user, availableGame.gameId);
-          await availableGame.updateSecondPlayer(user.userId);
+          await availableGame.updateSecondPlayer(user.userId, user);
           return;
         }
 
-        if (!gameFromDb) {
+        let gameFromDb: any = null;
+        if (isDbConnected()) {
+          try {
+            gameFromDb = await db.game.findUnique({
+              where: { id: gameId },
+              include: {
+                moves: {
+                  orderBy: {
+                    moveNumber: 'asc',
+                  },
+                },
+                blackPlayer: true,
+                whitePlayer: true,
+              },
+            });
+          } catch (e: any) {
+            console.warn('[GameManager] DB query failed in JOIN_ROOM (continuing with in-memory):', e?.message || e);
+          }
+        }
+
+        if (!gameFromDb && !availableGame) {
           user.socket.send(
             JSON.stringify({
               type: GAME_NOT_FOUND,
@@ -147,7 +163,7 @@ export class GameManager {
           return;
         }
 
-        if (gameFromDb.status !== GameStatus.IN_PROGRESS) {
+        if (gameFromDb && gameFromDb.status !== GameStatus.IN_PROGRESS) {
           user.socket.send(
             JSON.stringify({
               type: GAME_ENDED,
@@ -169,44 +185,55 @@ export class GameManager {
           return;
         }
 
-        if (!availableGame) {
-          const game = new Game(
-            gameFromDb?.whitePlayerId!,
-            gameFromDb?.blackPlayerId!,
-            gameFromDb.id,
-            gameFromDb.startAt
-          );
-          game.seedMoves(gameFromDb?.moves || []);
+        if (!availableGame && gameFromDb) {
+          const game = new Game(gameFromDb.whitePlayerId, gameFromDb.blackPlayerId, gameFromDb.id, gameFromDb.startAt);
+          game.seedMoves(gameFromDb.moves || []);
           this.games.push(game);
           availableGame = game;
         }
 
-        console.log(availableGame.getPlayer1TimeConsumed());
-        console.log(availableGame.getPlayer2TimeConsumed());
+        if (availableGame) {
+          socketManager.addUser(user, availableGame.gameId);
 
-        user.socket.send(
-          JSON.stringify({
-            type: GAME_JOINED,
-            payload: {
-              gameId,
-              moves: gameFromDb.moves,
-              blackPlayer: {
-                id: gameFromDb.blackPlayer.id,
-                name: gameFromDb.blackPlayer.name,
-                rating: gameFromDb.blackPlayer.rating,
-              },
-              whitePlayer: {
+          const whitePlayerInfo = gameFromDb?.whitePlayer
+            ? {
                 id: gameFromDb.whitePlayer.id,
                 name: gameFromDb.whitePlayer.name,
                 rating: gameFromDb.whitePlayer.rating,
-              },
-              player1TimeConsumed: availableGame.getPlayer1TimeConsumed(),
-              player2TimeConsumed: availableGame.getPlayer2TimeConsumed(),
-            },
-          })
-        );
+              }
+            : {
+                id: availableGame.player1UserId,
+                name: availableGame.player1User?.name ?? 'White Player',
+                rating: 1200,
+              };
 
-        socketManager.addUser(user, gameId);
+          const blackPlayerInfo = gameFromDb?.blackPlayer
+            ? {
+                id: gameFromDb.blackPlayer.id,
+                name: gameFromDb.blackPlayer.name,
+                rating: gameFromDb.blackPlayer.rating,
+              }
+            : {
+                id: availableGame.player2UserId ?? '',
+                name: availableGame.player2User?.name ?? 'Black Player',
+                rating: 1200,
+              };
+
+          user.socket.send(
+            JSON.stringify({
+              type: GAME_JOINED,
+              payload: {
+                gameId,
+                moves: gameFromDb?.moves ?? availableGame.board.history({ verbose: true }),
+                blackPlayer: blackPlayerInfo,
+                whitePlayer: whitePlayerInfo,
+                player1TimeConsumed: availableGame.getPlayer1TimeConsumed(),
+                player2TimeConsumed: availableGame.getPlayer2TimeConsumed(),
+                fen: availableGame.board.fen(),
+              },
+            })
+          );
+        }
       }
     });
   }
