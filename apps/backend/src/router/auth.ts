@@ -35,23 +35,36 @@ router.post('/guest', async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'Name is required' });
   }
 
-  // Check if user already exists
-  let user = await db.user.findFirst({
-    where: {
-      username: requestedName,
-    },
-  });
-
-  if (!user) {
-    // Create new user if not found
-    user = await db.user.create({
-      data: {
+  let user: any = null;
+  try {
+    // Check if user already exists
+    user = await db.user.findFirst({
+      where: {
         username: requestedName,
-        email: requestedName + '@guest.antichess.com', // Dummy email
-        name: requestedName,
-        provider: 'GUEST',
       },
     });
+
+    if (!user) {
+      // Create new user if not found
+      user = await db.user.create({
+        data: {
+          username: requestedName,
+          email: `${requestedName}_${Date.now()}@guest.local`,
+          name: requestedName,
+          provider: 'GUEST',
+        },
+      });
+    }
+  } catch (error) {
+    console.warn('⚠️  [Auth] Database unavailable during guest login, creating session in memory');
+    user = {
+      id: `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      name: requestedName,
+      rating: 1200,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+    };
   }
 
   const token = jwt.sign({ userId: user.id, name: user.name, isGuest: true }, JWT_SECRET);
@@ -60,10 +73,10 @@ router.post('/guest', async (req: Request, res: Response) => {
     name: user.name!,
     token: token,
     isGuest: true,
-    rating: user.rating,
-    wins: user.wins,
-    losses: user.losses,
-    draws: user.draws,
+    rating: user.rating ?? 1200,
+    wins: user.wins ?? 0,
+    losses: user.losses ?? 0,
+    draws: user.draws ?? 0,
   };
   res.cookie('guest', token, { maxAge: COOKIE_MAX_AGE });
   res.json(UserDetails);
@@ -73,42 +86,53 @@ router.get('/refresh', async (req: Request, res: Response) => {
   if (req.user) {
     const user = req.user as UserDetails;
 
-    // Token is issued so it can be shared b/w HTTP and ws server
-    // Todo: Make this temporary and add refresh logic here
+    let userDb: any = null;
+    try {
+      userDb = await db.user.findFirst({
+        where: {
+          id: user.id,
+        },
+      });
+    } catch (e) {
+      // DB offline; continue with token
+    }
 
-    const userDb = await db.user.findFirst({
-      where: {
-        id: user.id,
-      },
-    });
-
-    const token = jwt.sign({ userId: user.id, name: userDb?.name }, JWT_SECRET);
+    const token = jwt.sign({ userId: user.id, name: userDb?.name || user.name }, JWT_SECRET);
     res.json({
       token,
       id: user.id,
-      name: userDb?.name,
-      rating: userDb?.rating,
-      wins: userDb?.wins,
-      losses: userDb?.losses,
-      draws: userDb?.draws,
+      name: userDb?.name || user.name,
+      rating: userDb?.rating ?? 1200,
+      wins: userDb?.wins ?? 0,
+      losses: userDb?.losses ?? 0,
+      draws: userDb?.draws ?? 0,
     });
   } else if (req.cookies && req.cookies.guest) {
-    const decoded = jwt.verify(req.cookies.guest, JWT_SECRET) as userJwtClaims;
-    const userDb = await db.user.findUnique({ where: { id: decoded.userId } }); // Fetch latest stats
+    try {
+      const decoded = jwt.verify(req.cookies.guest, JWT_SECRET) as userJwtClaims;
+      let userDb: any = null;
+      try {
+        userDb = await db.user.findUnique({ where: { id: decoded.userId } });
+      } catch (e) {
+        // DB offline
+      }
 
-    const token = jwt.sign({ userId: decoded.userId, name: decoded.name, isGuest: true }, JWT_SECRET);
-    let User: UserDetails = {
-      id: decoded.userId,
-      name: decoded.name,
-      token: token,
-      isGuest: true,
-      rating: userDb?.rating,
-      wins: userDb?.wins,
-      losses: userDb?.losses,
-      draws: userDb?.draws,
-    };
-    res.cookie('guest', token, { maxAge: COOKIE_MAX_AGE });
-    res.json(User);
+      const token = jwt.sign({ userId: decoded.userId, name: decoded.name, isGuest: true }, JWT_SECRET);
+      const User: UserDetails = {
+        id: decoded.userId,
+        name: userDb?.name || decoded.name,
+        token: token,
+        isGuest: true,
+        rating: userDb?.rating ?? 1200,
+        wins: userDb?.wins ?? 0,
+        losses: userDb?.losses ?? 0,
+        draws: userDb?.draws ?? 0,
+      };
+      res.cookie('guest', token, { maxAge: COOKIE_MAX_AGE });
+      res.json(User);
+    } catch (e) {
+      res.status(401).json({ success: false, message: 'Invalid or expired session token' });
+    }
   } else {
     res.status(401).json({ success: false, message: 'Unauthorized' });
   }
